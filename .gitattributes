@@ -1,0 +1,5 @@
+windows/** linguist-vendored
+linux/** linguist-vendored
+*.cc linguist-vendored
+*.cpp linguist-vendored
+*.h linguist-vendored
