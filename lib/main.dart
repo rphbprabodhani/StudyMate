@@ -1,9 +1,12 @@
-
 import 'package:flutter/material.dart';
-import 'screens/home/home_screen.dart';
-import 'core/theme/app_colors.dart';
 
-void main() {
+import 'core/theme/app_colors.dart';
+import 'screens/main_screen.dart';
+import 'services/task_store.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await TaskStore.instance.load();
   runApp(const StudyMateApp());
 }
 
@@ -18,11 +21,9 @@ class StudyMateApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: AppColors.background,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primary,
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
       ),
-      home: const HomeScreen(),
+      home: const MainScreen(),
     );
   }
 }
