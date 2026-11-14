@@ -66,11 +66,19 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   ];
   String selectedFilter = 'All';
+  final TextEditingController searchController = TextEditingController();
+  String searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     _loadTasks();
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _saveTasks() async {
@@ -123,140 +131,146 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return '${date.day}/${date.month}/${date.year}';
-  
   }
 
-Future<void> addTask({int? editIndex}) async {
-  final isEditing = editIndex != null;
+  Future<void> addTask({int? editIndex}) async {
+    final isEditing = editIndex != null;
 
-  final existingTask =
-      isEditing ? tasks[editIndex] : null;
+    final existingTask = isEditing ? tasks[editIndex] : null;
 
-  final titleController = TextEditingController(
-    text: existingTask?.title ?? '',
-  );
+    final titleController = TextEditingController(
+      text: existingTask?.title ?? '',
+    );
 
-  final subjectController = TextEditingController(
-    text: existingTask?.subject ?? '',
-  );
+    final subjectController = TextEditingController(
+      text: existingTask?.subject ?? '',
+    );
 
-  DateTime selectedDate =
-      existingTask?.deadline ?? DateTime.now();
+    DateTime selectedDate = existingTask?.deadline ?? DateTime.now();
 
-  await showDialog(
-    context: context,
-    builder: (dialogContext) {
-      return StatefulBuilder(
-        builder: (context, updateDialog) {
-          return AlertDialog(
-            backgroundColor: Colors.white,
-            title: Text(
-              isEditing ? 'Edit Task' : 'Add New Task',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: titleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Task Title',
-                      prefixIcon: Icon(Icons.edit_note),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  TextField(
-                    controller: subjectController,
-                    decoration: const InputDecoration(
-                      labelText: 'Subject Name',
-                      prefixIcon: Icon(Icons.book_outlined),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      final date = await showDatePicker(
-                        context: dialogContext,
-                        initialDate: selectedDate,
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime(2035),
-                      );
-
-                      if (date != null) {
-                        updateDialog(() {
-                          selectedDate = date;
-                        });
-                      }
-                    },
-                    icon: const Icon(Icons.calendar_month),
-                    label: Text(formatDeadline(selectedDate)),
-                  ),
-                ],
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, updateDialog) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              title: Text(
+                isEditing ? 'Edit Task' : 'Add New Task',
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext);
-                },
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (titleController.text.trim().isEmpty ||
-                      subjectController.text.trim().isEmpty) {
-                    return;
-                  }
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Task Title',
+                        prefixIcon: Icon(Icons.edit_note),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    TextField(
+                      controller: subjectController,
+                      decoration: const InputDecoration(
+                        labelText: 'Subject Name',
+                        prefixIcon: Icon(Icons.book_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        final date = await showDatePicker(
+                          context: dialogContext,
+                          initialDate: selectedDate,
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime(2035),
+                        );
 
-                  setState(() {
-                    if (isEditing) {
-                      tasks[editIndex] = StudyTask(
-                        title: titleController.text.trim(),
-                        subject: subjectController.text.trim(),
-                        deadline: selectedDate,
-                        isCompleted: existingTask!.isCompleted,
-                      );
-                    } else {
-                      tasks.add(
-                        StudyTask(
+                        if (date != null) {
+                          updateDialog(() {
+                            selectedDate = date;
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.calendar_month),
+                      label: Text(formatDeadline(selectedDate)),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                  },
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (titleController.text.trim().isEmpty ||
+                        subjectController.text.trim().isEmpty) {
+                      return;
+                    }
+
+                    setState(() {
+                      if (isEditing) {
+                        tasks[editIndex] = StudyTask(
                           title: titleController.text.trim(),
                           subject: subjectController.text.trim(),
                           deadline: selectedDate,
-                        ),
-                      );
-                    }
-                  });
+                          isCompleted: existingTask!.isCompleted,
+                        );
+                      } else {
+                        tasks.add(
+                          StudyTask(
+                            title: titleController.text.trim(),
+                            subject: subjectController.text.trim(),
+                            deadline: selectedDate,
+                          ),
+                        );
+                      }
+                    });
 
-                  _saveTasks();
-                  Navigator.pop(dialogContext);
-                },
-                child: Text(isEditing ? 'Save Changes' : 'Add Task'),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
+                    _saveTasks();
+                    Navigator.pop(dialogContext);
+                  },
+                  child: Text(isEditing ? 'Save Changes' : 'Add Task'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
 
-  titleController.dispose();
-  subjectController.dispose();
-}
-
-
+    titleController.dispose();
+    subjectController.dispose();
   }
 
   List<StudyTask> get filteredTasks {
+    List<StudyTask> result = tasks;
+
     if (selectedFilter == 'Pending') {
-      return tasks.where((task) => !task.isCompleted).toList();
+      result = result.where((task) => !task.isCompleted).toList();
+    } else if (selectedFilter == 'Completed') {
+      result = result.where((task) => task.isCompleted).toList();
     }
 
-    if (selectedFilter == 'Completed') {
-      return tasks.where((task) => task.isCompleted).toList();
+    final query = searchQuery.trim().toLowerCase();
+
+    if (query.isNotEmpty) {
+      result = result
+          .where(
+            (task) =>
+                task.title.toLowerCase().contains(query) ||
+                task.subject.toLowerCase().contains(query),
+          )
+          .toList();
     }
 
-    return tasks;
+    return result;
   }
 
   @override
@@ -399,6 +413,38 @@ Future<void> addTask({int? editIndex}) async {
 
             const SizedBox(height: 10),
 
+            TextField(
+              controller: searchController,
+              onChanged: (value) {
+                setState(() {
+                  searchQuery = value;
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Search tasks...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          searchController.clear();
+                          setState(() {
+                            searchQuery = '';
+                          });
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
             Row(
               children: [
                 _filterButton('All'),
@@ -418,7 +464,14 @@ Future<void> addTask({int? editIndex}) async {
                   child: Text('No tasks yet. Add your first task!'),
                 ),
               ),
-
+            if (tasks.isNotEmpty && filteredTasks.isEmpty)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(30),
+                  child: Text('No matching tasks found.'),
+                ),
+              ),
+              
             ...filteredTasks.map((task) {
               final index = tasks.indexOf(task);
 
@@ -477,12 +530,12 @@ Future<void> addTask({int? editIndex}) async {
                             ),
                           ),
                         ],
-                      )
+                      ),
                     ),
                     IconButton(
-                     onPressed: () {
-  addTask(editIndex: index);
-},
+                      onPressed: () {
+                        addTask(editIndex: index);
+                      },
                       icon: const Icon(
                         Icons.edit_outlined,
                         color: Colors.deepPurple,
