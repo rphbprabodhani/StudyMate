@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../services/profile_store.dart';
 import '../../services/task_store.dart';
+import '../../services/auth_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -131,18 +132,30 @@ class ProfileScreen extends StatelessWidget {
                 child: const Column(
                   children: [
                     ListTile(
-                      leading: Icon(Icons.info_outline, color: AppColors.primary),
+                      leading: Icon(
+                        Icons.info_outline,
+                        color: AppColors.primary,
+                      ),
                       title: Text('StudyMate'),
                       subtitle: Text('Version 1.0.0'),
                     ),
                     Divider(height: 1),
                     ListTile(
-                      leading: Icon(Icons.save_outlined, color: AppColors.primary),
+                      leading: Icon(
+                        Icons.save_outlined,
+                        color: AppColors.primary,
+                      ),
                       title: Text('Local storage'),
                       subtitle: Text('Your tasks are saved on this device.'),
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(height: 20),
+              OutlinedButton.icon(
+                onPressed: () => AuthService.instance.logout(),
+                icon: const Icon(Icons.logout),
+                label: const Text('Log out'),
               ),
             ],
           );
@@ -152,10 +165,7 @@ class ProfileScreen extends StatelessWidget {
   }
 
   void _showEditDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => const _EditProfileDialog(),
-    );
+    showDialog(context: context, builder: (_) => const _EditProfileDialog());
   }
 
   Widget _stat(String title, String value) {
