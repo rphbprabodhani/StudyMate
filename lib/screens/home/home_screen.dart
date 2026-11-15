@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 import '../../services/task_store.dart';
 import '../../widgets/task_card.dart';
 import '../../widgets/task_dialog.dart';
+import '../../services/profile_store.dart';
 
 class HomeScreen extends StatelessWidget {
   /// Called when the user taps "View all" (MainScreen switches to the Tasks tab).
@@ -26,12 +27,13 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
       body: ListenableBuilder(
-        listenable: store,
+        listenable: Listenable.merge([store, ProfileStore.instance]),
         builder: (context, _) {
           final progress = store.progress;
 
-          final upcoming = store.tasks.where((task) => !task.isCompleted).toList()
-            ..sort((a, b) => a.deadline.compareTo(b.deadline));
+          final upcoming =
+              store.tasks.where((task) => !task.isCompleted).toList()
+                ..sort((a, b) => a.deadline.compareTo(b.deadline));
           final shown = upcoming.take(3).toList();
 
           return SingleChildScrollView(
@@ -39,9 +41,9 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Hello, Student 👋',
-                  style: TextStyle(
+                Text(
+                  'Hello, ${ProfileStore.instance.name} 👋',
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: AppColors.dark,
@@ -152,7 +154,9 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
 
-                ...shown.map((task) => TaskCard(key: ObjectKey(task), task: task)),
+                ...shown.map(
+                  (task) => TaskCard(key: ObjectKey(task), task: task),
+                ),
               ],
             ),
           );

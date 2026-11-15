@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../services/profile_store.dart';
 import '../../services/task_store.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -9,6 +10,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = TaskStore.instance;
+    final profile = ProfileStore.instance;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -21,8 +23,11 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
       body: ListenableBuilder(
-        listenable: store,
+        listenable: Listenable.merge([store, profile]),
         builder: (context, _) {
+          final name = profile.name;
+          final goal = profile.goal;
+
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
@@ -31,14 +36,21 @@ class ProfileScreen extends StatelessWidget {
                 child: CircleAvatar(
                   radius: 48,
                   backgroundColor: AppColors.primary,
-                  child: const Icon(Icons.person, size: 52, color: Colors.white),
+                  child: Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : 'S',
+                    style: const TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 14),
-              const Center(
+              Center(
                 child: Text(
-                  'Student',
-                  style: TextStyle(
+                  name,
+                  style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: AppColors.dark,
@@ -52,7 +64,49 @@ class ProfileScreen extends StatelessWidget {
                   style: TextStyle(color: AppColors.grey),
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 8),
+              Center(
+                child: TextButton.icon(
+                  onPressed: () => _showEditDialog(context),
+                  icon: const Icon(Icons.edit, size: 18),
+                  label: const Text('Edit profile'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: const [
+                        Icon(Icons.flag_outlined, color: AppColors.primary),
+                        SizedBox(width: 8),
+                        Text(
+                          'Study goal',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.dark,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      goal.isEmpty
+                          ? 'Tap "Edit profile" to set your study goal.'
+                          : goal,
+                      style: TextStyle(color: AppColors.grey),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
@@ -97,6 +151,13 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  void _showEditDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => const _EditProfileDialog(),
+    );
+  }
+
   Widget _stat(String title, String value) {
     return Column(
       children: [
@@ -110,6 +171,78 @@ class ProfileScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(title, style: TextStyle(fontSize: 12, color: AppColors.grey)),
+      ],
+    );
+  }
+}
+
+class _EditProfileDialog extends StatefulWidget {
+  const _EditProfileDialog();
+
+  @override
+  State<_EditProfileDialog> createState() => _EditProfileDialogState();
+}
+
+class _EditProfileDialogState extends State<_EditProfileDialog> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _goalController;
+
+  @override
+  void initState() {
+    super.initState();
+    final profile = ProfileStore.instance;
+    _nameController = TextEditingController(text: profile.name);
+    _goalController = TextEditingController(text: profile.goal);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _goalController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit profile'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _nameController,
+              maxLength: 30,
+              decoration: const InputDecoration(labelText: 'Your name'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _goalController,
+              maxLength: 80,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Study goal',
+                hintText: 'e.g. Finish all semester revision',
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            ProfileStore.instance.save(
+              name: _nameController.text,
+              goal: _goalController.text,
+            );
+            Navigator.pop(context);
+          },
+          child: const Text('Save'),
+        ),
       ],
     );
   }

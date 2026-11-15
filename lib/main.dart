@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-
 import 'core/theme/app_colors.dart';
 import 'screens/main_screen.dart';
 import 'services/task_store.dart';
+import 'services/profile_store.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await TaskStore.instance.load();
+  await ProfileStore.instance.load();
   runApp(const StudyMateApp());
 }
 
